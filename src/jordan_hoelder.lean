@@ -14,15 +14,15 @@ open set
 class jordan_hoelder_class (X : Type u) [lattice X] :=
 (is_maximal : X → X → Prop)
 (lt_of_is_maximal : ∀ {x y}, is_maximal x y → x < y)
+(sup_eq_of_is_maximal : ∀ {x y z}, is_maximal x z → is_maximal y z →
+  x ≠ y → x ⊔ y = z)
+(is_maximal_inf : ∀ {x y z}, is_maximal x z → is_maximal y z → x ≠ y →
+  is_maximal (x ⊓ y) y)
 (isom : (X × X) → (X × X) → Prop)
 (isom_refl : ∀ x, isom x x)
 (isom_symm : ∀ {x y}, isom x y → isom y x)
 (isom_trans : ∀ {x y z}, isom x y → isom y z → isom x z)
 (second_iso : ∀ x y, isom (y, x ⊔ y) (x ⊓ y, x))
-(sup_eq_of_is_maximal : ∀ {x y z}, is_maximal x z → is_maximal y z →
-  x ≠ y → x ⊔ y = z)
-(is_maximal_inter : ∀ {x y z}, is_maximal x z → is_maximal y z → x ≠ y →
-  is_maximal (x ⊓ y) y)
 
 open jordan_hoelder_class
 
@@ -526,31 +526,6 @@ by simp [swap_top_two_fin, fin.ext_iff]
 have ∀ {m : ℕ} {i : fin m}, i.cast_succ.cast_succ = fin.cast_add 2 i := λ _ _, fin.ext rfl,
 by simp [swap_top_two_fin, this]
 
-def option_option_equiv_swap :
-  option (option α) ≃ option (option β) :=
-{ to_fun := λ o, option.elim o (some none) (λ o, option.map (λ a, some (e a)) o),
-  inv_fun := λ o, option.elim o (some none) (λ o, option.map (λ a, some (e.symm a)) o),
-  left_inv := λ o,by rcases o with _|_|_; simp,
-  right_inv := λ o, by rcases o with _|_|_; simp }
-
-@[simp] lemma option_option_equiv_swap_none :
-  option_option_equiv_swap e none = some none := rfl
-
-@[simp] lemma option_option_equiv_swap_some_none :
-  option_option_equiv_swap e (some none) = none := rfl
-
-@[simp] lemma option_option_equiv_swap_some (a : α) :
-  option_option_equiv_swap e (some a) = some (e a) := rfl
-
-@[simp] lemma option_option_equiv_swap_symm_none :
-  (option_option_equiv_swap e).symm none = some none := rfl
-
-@[simp] lemma option_option_equiv_swap_symm_some_none :
-  (option_option_equiv_swap e).symm (some none) = none := rfl
-
-@[simp] lemma option_option_equiv_swap_symm_some (a : β) :
-  (option_option_equiv_swap e).symm (some a) = some (e.symm a) := rfl
-
 lemma insert_insert_swap
   {s₁ s₂ : composition_series X}
   {x₁ x₂ y₁ y₂ : X}
@@ -586,8 +561,7 @@ swap_top_two_fin hequiv.some in
       exact hequiv.some_spec i } }
 end⟩
 
-lemma length_eq {s₁ s₂ : composition_series X} (h : equivalent s₁ s₂) :
-  s₁.length = s₂.length :=
+lemma length_eq {s₁ s₂ : composition_series X} (h : equivalent s₁ s₂) : s₁.length = s₂.length :=
 by simpa using fintype.card_congr h.some
 
 end equivalent
@@ -639,12 +613,12 @@ begin
     { use s.erase_top,
       simp [← hetx, hn] },
     { have imxs : is_maximal (x ⊓ s.erase_top.top) s.erase_top.top,
-        from is_maximal_inter hm (is_maximal_erase_top_top h0s) (ne.symm hetx),
+        from is_maximal_inf hm (is_maximal_erase_top_top h0s) (ne.symm hetx),
       have := ih _ _ imxs (le_inf (by simpa) (le_top s.erase_top.bot_mem)) (by simp [hn]),
       rcases this with ⟨t, htb, htl, htt, hteqv⟩,
       have hmtx : is_maximal t.top x,
       { rw [htt, inf_comm],
-        exact is_maximal_inter (is_maximal_erase_top_top h0s) hm  hetx },
+        exact is_maximal_inf (is_maximal_erase_top_top h0s) hm  hetx },
       use insert t x hmtx,
       refine ⟨by simp [htb], by simp [htl], by simp, _⟩,
       have : s.equivalent ((insert t s.erase_top.top (htt.symm ▸ imxs)).insert s.top
