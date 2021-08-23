@@ -244,12 +244,9 @@ lemma lt_top_of_mem_erase_top
   (h : 0 < s.length)
   (hx : x ∈ s.erase_top) :
   x < s.top :=
-begin
-  rcases hx with ⟨⟨i, hi⟩, rfl⟩,
-  refine s.strict_mono _,
-  simp only [fin.lt_iff_coe_lt_coe, fin.coe_last, fin.coe_mk],
-  rwa [erase_top_length, nat.sub_succ, nat.sub_zero, nat.succ_pred_eq_of_pos h] at hi
-end
+lt_of_le_of_ne
+  (le_top ((mem_erase_top h).1 hx).2)
+  ((mem_erase_top h).1 hx).1
 
 lemma is_maximal_erase_top_top {s : composition_series X} (h : 0 < s.length) :
   is_maximal s.erase_top.top s.top :=
